@@ -5,6 +5,7 @@
 #include "RE.hpp"
 #include <sstream>
 #include <iostream>
+#include <cassert>
 #include <map>
 
 extern std::map<std::string, ExprType> primitives;
@@ -55,20 +56,21 @@ void REPL(){
         Syntax stx = readSyntax(std :: cin); // read
         try{
             Expr expr = stx -> parse(global_env); // parse
-            // stx -> show(std :: cout); // syntax print
+             stx -> show(std :: cout); // syntax print
+            
             Value val = expr -> eval(global_env);
             if (val -> v_type == V_TERMINATE)
                 break;
             val -> show(std :: cout); // value print
+            //assert(0);
         }
         catch (const RuntimeError &RE){
-            // std :: cout << RE.message();
+             std :: cout << RE.message();
             std :: cout << "RuntimeError";
         }
         puts("");
     }
 }
-
 
 int main(int argc, char *argv[]) {
     REPL();

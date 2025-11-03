@@ -7,12 +7,13 @@ echo "--------------------------------------------------------------------------
 cd "$(dirname "$0")"
 
 L=1
-R=118
+R=10
 for ((i = $L; i <= $R; i = i + 1))
 do
     echo ""
     echo "---------------------------"
     echo "Ready to test: TEST" $i
+    echo "CNMB"
     if [ ! -f "data/$i.in" ]; then
         echo "Input file data/$i.in not found, skipping TEST $i"
         continue
@@ -21,6 +22,7 @@ do
         echo "Output file data/$i.out not found, skipping TEST $i"
         continue
     fi
+    echo "MLGB"
     ../build/code << EOF > scm.out
     $(cat data/$i.in)
     (exit)

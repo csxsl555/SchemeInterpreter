@@ -58,6 +58,10 @@ Value Binary::eval(Assoc &e) { // evaluation of two-operators primitive
 
 Value Variadic::eval(Assoc &e) { // evaluation of multi-operator primitive
     // TODO: TO COMPLETE THE VARIADIC CLASS
+    std::vector <Value> args;
+    for (const auto &var : rands) 
+        args.push_back(var->eval(e));
+    return evalRator(args);
 }
 
 Value Var::eval(Assoc &e) { // evaluation of variable
@@ -356,18 +360,62 @@ Value Modulo::evalRator(const Value &rand1, const Value &rand2) { // modulo
 
 Value PlusVar::evalRator(const std::vector<Value> &args) { // + with multiple args
     // TODO: To complete the addition logic
+    if (args.empty()) {
+        return IntegerV(0); // Scheme standard: (+) => 0
+    }
+    // Accumulate result by sequentially applying binary +
+    Value result = args[0];
+    for (size_t i = 1; i < args.size(); ++i) {
+        result = Plus(Expr(nullptr), Expr(nullptr)).evalRator(result, args[i]);
+    }
+    return result;
 }
 
 Value MinusVar::evalRator(const std::vector<Value> &args) { // - with multiple args
-    // TODO: To complete the substraction logic
+    // TODO: To complete the substraction 
+    if (args.empty()) {
+        throw RuntimeError("minus requires at least 1 argument");
+    }
+    if (args.size() == 1) {
+        // Single argument: return its negation (0 - arg)
+        return Minus(Expr(nullptr), Expr(nullptr)).evalRator(IntegerV(0), args[0]);
+    }
+    // Accumulate result by sequentially applying binary -
+    Value result = args[0];
+    for (size_t i = 1; i < args.size(); ++i) {
+        result = Minus(Expr(nullptr), Expr(nullptr)).evalRator(result, args[i]); 
+    }
+    return result;
 }
 
 Value MultVar::evalRator(const std::vector<Value> &args) { // * with multiple args
     // TODO: To complete the multiplication logic
+    if (args.empty()) {
+        return IntegerV(1); // Scheme standard: (*) => 1
+    }
+    // Accumulate result by sequentially applying binary *
+    Value result = args[0];
+    for (size_t i = 1; i < args.size(); ++i) {
+        result = Mult(Expr(nullptr), Expr(nullptr)).evalRator(result, args[i]); // Reuse Binary::Mult
+    }
+    return result;
 }
 
 Value DivVar::evalRator(const std::vector<Value> &args) { // / with multiple args
     // TODO: To complete the divisor logic
+    if (args.empty()) {
+        throw RuntimeError("division requires at least 1 argument");
+    }
+    if (args.size() == 1) {
+        // Single argument: return its reciprocal (1 / arg)
+        return Div(Expr(nullptr), Expr(nullptr)).evalRator(IntegerV(1), args[0]);
+    }
+    // Accumulate result by sequentially applying binary /
+    Value result = args[0];
+    for (size_t i = 1; i < args.size(); ++i) {
+        result = Div(Expr(nullptr), Expr(nullptr)).evalRator(result, args[i]); // Reuse Binary::Div
+    }
+    return result;
 }
 
 Value Expt::evalRator(const Value &rand1, const Value &rand2) { // expt
@@ -501,22 +549,73 @@ Value Greater::evalRator(const Value &rand1, const Value &rand2) { // >
 
 Value LessVar::evalRator(const std::vector<Value> &args) { // < with multiple args
     // TODO: To complete the less logic
+    if (args.size() < 2) {
+        return BooleanV(true); // Scheme standard: (<) or (< a) => #t
+    }
+    for (size_t i = 0; i < args.size() - 1; ++i) {
+        // Reuse Binary::Less logic for pairwise comparison
+        Value res = Less(Expr(nullptr), Expr(nullptr)).evalRator(args[i], args[i+1]);
+        if (!dynamic_cast<Boolean*>(res.get())->b) {
+            return BooleanV(false); // Early exit on first failure
+        }
+    }
+    return BooleanV(true);
 }
 
 Value LessEqVar::evalRator(const std::vector<Value> &args) { // <= with multiple args
     // TODO: To complete the lesseq logic
+    if (args.size() < 2) {
+        return BooleanV(true);
+    }
+    for (size_t i = 0; i < args.size() - 1; ++i) {
+        Value res = LessEq(Expr(nullptr), Expr(nullptr)).evalRator(args[i], args[i+1]);
+        if (!dynamic_cast<Boolean*>(res.get())->b) {
+            return BooleanV(false);
+        }
+    }
+    return BooleanV(true);
 }
 
 Value EqualVar::evalRator(const std::vector<Value> &args) { // = with multiple args
     // TODO: To complete the equal logic
+    if (args.size() < 2) {
+        return BooleanV(true);
+    }
+    for (size_t i = 0; i < args.size() - 1; ++i) {
+        Value res = Equal(Expr(nullptr), Expr(nullptr)).evalRator(args[i], args[i+1]);
+        if (!dynamic_cast<Boolean*>(res.get())->b) {
+            return BooleanV(false);
+        }
+    }
+    return BooleanV(true);
 }
 
 Value GreaterEqVar::evalRator(const std::vector<Value> &args) { // >= with multiple args
     // TODO: To complete the greatereq logic
+    if (args.size() < 2) {
+        return BooleanV(true);
+    }
+    for (size_t i = 0; i < args.size() - 1; ++i) {
+        Value res = GreaterEq(Expr(nullptr), Expr(nullptr)).evalRator(args[i], args[i+1]);
+        if (!dynamic_cast<Boolean*>(res.get())->b) {
+            return BooleanV(false);
+        }
+    }
+    return BooleanV(true);
 }
 
 Value GreaterVar::evalRator(const std::vector<Value> &args) { // > with multiple args
     // TODO: To complete the greater logic
+    if (args.size() < 2) {
+        return BooleanV(true);
+    }
+    for (size_t i = 0; i < args.size() - 1; ++i) {
+        Value res = Greater(Expr(nullptr), Expr(nullptr)).evalRator(args[i], args[i+1]);
+        if (!dynamic_cast<Boolean*>(res.get())->b) {
+            return BooleanV(false);
+        }
+    }
+    return BooleanV(true);
 }
 
 Value Cons::evalRator(const Value &rand1, const Value &rand2) { // cons
@@ -595,10 +694,24 @@ Value Cdr::evalRator(const Value &rand) { // cdr
 
 Value SetCar::evalRator(const Value &rand1, const Value &rand2) { // set-car!
     // TODO: To complete the set-car! logic
+    // Validate first argument is a pair
+    if (rand1->v_type != V_PAIR) {
+        throw RuntimeError("set-car!: first argument must be a pair");
+    }
+    // Mutate the car field of the pair (direct memory update)
+    dynamic_cast<Pair*>(rand1.get())->car = rand2;
+    return VoidV();
 }
 
 Value SetCdr::evalRator(const Value &rand1, const Value &rand2) { // set-cdr!
     // TODO: To complete the set-cdr! logic
+    // Validate first argument is a pair
+    if (rand1->v_type != V_PAIR) {
+        throw RuntimeError("set-cdr!: first argument must be a pair");
+    }
+    // Mutate the cdr field of the pair (direct memory update)
+    dynamic_cast<Pair*>(rand1.get())->cdr = rand2;
+    return VoidV();
 }
 
 Value IsEq::evalRator(const Value &rand1, const Value &rand2) { // eq?
@@ -872,6 +985,27 @@ Value If::eval(Assoc &e) {
 
 Value Cond::eval(Assoc &env) {
     // TODO: To complete the cond logic
+    for (const auto &clause : clauses) { // Iterate over `clauses` member (expr.hpp)
+        if (clause.empty()) {
+            throw RuntimeError("cond: empty clause is invalid");
+        }
+        // Evaluate the first element of the clause (the condition)
+        Value cond_val = clause[0]->eval(env);
+        // Scheme rule: non-#f values are true
+        bool is_true = !(cond_val->v_type == V_BOOL && !dynamic_cast<Boolean*>(cond_val.get())->b);
+
+        if (is_true) {
+            // Evaluate remaining expressions in the clause; return the last one
+            Value last_val = VoidV();
+            for (size_t i = 1; i < clause.size(); ++i) {
+                last_val = clause[i]->eval(env);
+            }
+            // If clause has only a condition (no body), return the condition's value
+            return (clause.size() == 1) ? cond_val : last_val;
+        }
+    }
+    // No true clauses: return #f (Scheme standard)
+    return BooleanV(false);
 }
 
 Value Lambda::eval(Assoc &env) {
@@ -945,14 +1079,55 @@ Value Define::eval(Assoc &env) {
 
 Value Let::eval(Assoc &env) {
     // TODO: To complete the let logic
+    // 1. Evaluate all bindings in the original environment (non-recursive)
+    std::vector<std::pair<std::string, Value>> evaluated_bindings;
+    for (const auto &bind_pair : bind) { // Iterate over `bind` member (expr.hpp)
+        const std::string &var = bind_pair.first;  // Variable name
+        const Expr &expr = bind_pair.second;       // Bound expression (Expr type per expr.hpp)
+        Value val = expr->eval(env);               // Evaluate in outer environment
+        evaluated_bindings.emplace_back(var, val);
+    }
+    // 2. Extend the environment with evaluated bindings
+    Assoc let_env = env;
+    for (const auto &[var, val] : evaluated_bindings) {
+        let_env = extend(var, val, let_env);
+    }
+    // 3. Evaluate `body` member (single Expr) in the extended environment
+    return body->eval(let_env); // Use `body` member (expr.hpp)
 }
 
 Value Letrec::eval(Assoc &env) {
     // TODO: To complete the letrec logic
+    // 1. Create placeholder bindings (VoidV) in a new environment
+    Assoc letrec_env = env;
+    for (const auto &bind_pair : bind) { // Iterate over `bind` member (expr.hpp)
+        const std::string &var = bind_pair.first;
+        letrec_env = extend(var, VoidV(), letrec_env); // Placeholder for recursion
+    }
+    // 2. Evaluate expressions in the new environment (allow recursive references)
+    for (const auto &bind_pair : bind) {
+        const std::string &var = bind_pair.first;
+        const Expr &expr = bind_pair.second; // Bound expression (Expr type per expr.hpp)
+        Value val = expr->eval(letrec_env);   // Can reference other letrec variables
+        modify(var, val, letrec_env);         // Replace placeholder with real value
+    }
+    // 3. Evaluate `body` member in the updated environment
+    return body->eval(letrec_env); // Use `body` member (expr.hpp)
 }
 
 Value Set::eval(Assoc &env) {
     // TODO: To complete the set logic
+    // 1. Check if `var` (member) exists in the environment
+    Value existing = find(var, env); // Use `var` member (expr.hpp)
+    if (existing.get() == nullptr) {
+        throw RuntimeError("set!: undefined variable '" + var + "'");
+    }
+    // 2. Evaluate `e` member (new value)
+    Value new_val = e->eval(env); // Use `e` member (expr.hpp: Expr type)
+    // 3. Modify the existing binding in the environment
+    modify(var, new_val, env);
+    // Scheme standard: set! returns void
+    return VoidV();
 }
 
 Value Display::evalRator(const Value &rand) { // display function
