@@ -11,7 +11,7 @@ public:
 };p
  * @brief Expression structures for the Scheme interpreter
  * @author luke36
- * 
+ *
  * This file defines all expression types used in the Scheme interpreter.
  * Structures are organized according to ExprType enumeration order from
  * Def.hpp for consistency and maintainability.
@@ -19,11 +19,11 @@ public:
 
 #include "Def.hpp"
 #include "syntax.hpp"
-#include <memory>
 #include <cstring>
+#include <memory>
 #include <vector>
 
-struct ExprBase{
+struct ExprBase {
     ExprType e_type;
     ExprBase(ExprType);
     virtual Value eval(Assoc &) = 0;
@@ -32,11 +32,12 @@ struct ExprBase{
 
 class Expr {
     std::shared_ptr<ExprBase> ptr;
+
 public:
     Expr(ExprBase *);
-    ExprBase* operator->() const;
-    ExprBase& operator*();
-    ExprBase* get() const;
+    ExprBase *operator->() const;
+    ExprBase &operator*();
+    ExprBase *get() const;
 };
 
 // ================================================================================
@@ -48,9 +49,9 @@ public:
  * Represents fixed-point numbers (integers)
  */
 struct Fixnum : ExprBase {
-  int n;
-  Fixnum(int);
-  virtual Value eval(Assoc &) override;
+    int n;
+    Fixnum(int);
+    virtual Value eval(Assoc &) override;
 };
 
 /**
@@ -58,10 +59,10 @@ struct Fixnum : ExprBase {
  * Represents rational numbers as numerator/denominator
  */
 struct RationalNum : ExprBase {
-  int numerator;
-  int denominator;
-  RationalNum(int num, int den);
-  virtual Value eval(Assoc &) override;
+    int numerator;
+    int denominator;
+    RationalNum(int num, int den);
+    virtual Value eval(Assoc &) override;
 };
 
 /**
@@ -69,25 +70,25 @@ struct RationalNum : ExprBase {
  * Represents string values
  */
 struct StringExpr : ExprBase {
-  std::string s;
-  StringExpr(const std::string &);
-  virtual Value eval(Assoc &) override;
+    std::string s;
+    StringExpr(const std::string &);
+    virtual Value eval(Assoc &) override;
 };
 
 /**
  * @brief Boolean true literal
  */
 struct True : ExprBase {
-  True();
-  virtual Value eval(Assoc &) override;
+    True();
+    virtual Value eval(Assoc &) override;
 };
 
 /**
- * @brief Boolean false literal  
+ * @brief Boolean false literal
  */
 struct False : ExprBase {
-  False();
-  virtual Value eval(Assoc &) override;
+    False();
+    virtual Value eval(Assoc &) override;
 };
 
 struct MakeVoid : ExprBase {
@@ -280,7 +281,7 @@ struct Not : Unary {
 struct AndVar : ExprBase {
     std::vector<Expr> rands;
     AndVar(const std::vector<Expr> &);
-    virtual Value eval(Assoc &) override;  
+    virtual Value eval(Assoc &) override;
 };
 
 struct OrVar : ExprBase {
@@ -349,9 +350,9 @@ struct Begin : ExprBase {
 };
 
 struct Quote : ExprBase {
-  Syntax s;
-  Quote(const Syntax &);
-  virtual Value eval(Assoc &) override;
+    Syntax s;
+    Quote(const Syntax &);
+    virtual Value eval(Assoc &) override;
 };
 
 // ================================================================================
@@ -359,11 +360,11 @@ struct Quote : ExprBase {
 // ================================================================================
 
 struct If : ExprBase {
-  Expr cond;
-  Expr conseq;
-  Expr alter;
-  If(const Expr &, const Expr &, const Expr &);
-  virtual Value eval(Assoc &) override;
+    Expr cond;
+    Expr conseq;
+    Expr alter;
+    If(const Expr &, const Expr &, const Expr &);
+    virtual Value eval(Assoc &) override;
 };
 
 struct Cond : ExprBase {
