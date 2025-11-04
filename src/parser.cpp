@@ -28,8 +28,9 @@ extern std::map<std::string, ExprType> reserved_words;
  * @brief Default parse method (should be overridden by subclasses)
  */
 Expr Syntax::parse(Assoc &env) {
-    std::string type_name = typeid(*this).name();
-    throw RuntimeError("Unimplemented parse method for class: " + type_name);
+    //std::string type_name = typeid(*this).name();
+    //throw RuntimeError("Unimplemented parse method for class: " + type_name);
+    return ptr->parse(env);
 }
 
 Expr Number::parse(Assoc &env) {
