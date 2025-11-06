@@ -7,7 +7,7 @@ echo "--------------------------------------------------------------------------
 cd "$(dirname "$0")"
 
 L=1
-R=1
+R=0
 for ((i = $L; i <= $R; i = i + 1))
 do
     echo ""
@@ -42,8 +42,8 @@ EOF
     echo ""
 done
 
-L_EXTRA=1
-R_EXTRA=7
+L_EXTRA=3
+R_EXTRA=3
 for ((i = $L_EXTRA; i <= $R_EXTRA; i = i + 1))
 do
     echo ""
