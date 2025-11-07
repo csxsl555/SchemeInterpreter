@@ -143,10 +143,10 @@ Value Var::eval(Assoc &e) { // evaluation of variable
                 {E_SYMBOLQ, {new IsSymbol(new Var("parm")), {"parm"}}},
                 {E_STRINGQ, {new IsString(new Var("parm")), {"parm"}}},
                 {E_DISPLAY, {new Display(new Var("parm")), {"parm"}}},
-                {E_PLUS, {new PlusVar({}), {}}},
-                {E_MINUS, {new MinusVar({}), {}}},
-                {E_MUL, {new MultVar({}), {}}},
-                {E_DIV, {new DivVar({}), {}}},
+                {E_PLUS, {new PlusVar({}), {"numbers..."}}},
+                {E_MINUS, {new MinusVar({}), {"numbers..."}}},
+                {E_MUL, {new MultVar({}), {"numbers..."}}},
+                {E_DIV, {new DivVar({}), {"numbers..."}}},
                 {E_MODULO, {new Modulo(new Var("parm1"), new Var("parm2")), {"parm1", "parm2"}}},
                 {E_EXPT, {new Expt(new Var("parm1"), new Var("parm2")), {"parm1", "parm2"}}},
                 {E_EQQ, {new EqualVar({}), {}}},
@@ -914,16 +914,18 @@ Value AndVar::eval(Assoc &e) { // and with short-circuit evaluation
     }
 
     // Evaluate AND with short-circuit: returns #f on first #f, else last value
+    Value last_result = NullV();
     for (const auto &expr : rands) {
         Value res = expr.get()->eval(e); // Evaluate current expression (Expr -> ExprBase* -> eval)
         // Short-circuit: return #f if current value is #f
         if (res->v_type == V_BOOL && !dynamic_cast<Boolean *>(res.get())->b) {
             return BooleanV(false);
         }
+        last_result = res; // Store the last evaluated value
     }
 
-    // All arguments are true; return the last one's value
-    return rands.back().get()->eval(e);
+    // All arguments are not #f; return the last one's value
+    return last_result;
 }
 
 Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
@@ -936,8 +938,8 @@ Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
     for (const auto &expr : rands) {
         Value res = expr.get()->eval(e); // Evaluate current expression (Expr -> ExprBase* -> eval)
         // Short-circuit: return current value if it's not #f
-        if (res->v_type == V_BOOL && dynamic_cast<Boolean *>(res.get())->b) {
-            return BooleanV(true);
+        if (!(res->v_type == V_BOOL && !dynamic_cast<Boolean *>(res.get())->b)) {
+            return res; // Return the actual value, not converted to boolean
         }
     }
 
@@ -1028,18 +1030,60 @@ Value Apply::eval(Assoc &e) {
     }
 
     // Step 3: Check argument count match (closure's parameters vs evaluated args)
+    // For variadic functions like + and *, we need special handling
     if (args.size() != clos_ptr->parameters.size()) {
-        throw RuntimeError("Wrong number of arguments: expected " +
-                           std::to_string(clos_ptr->parameters.size()) + ", got " +
-                           std::to_string(args.size()));
+        // Check if this is a variadic function (single parameter name ending with "...")
+        if (clos_ptr->parameters.size() == 1 &&
+            clos_ptr->parameters[0].size() >= 3 &&
+            clos_ptr->parameters[0].substr(clos_ptr->parameters[0].size() - 3) == "...") {
+            // Variadic function - accept any number of arguments
+        } else {
+            throw RuntimeError("Wrong number of arguments: expected " +
+                               std::to_string(clos_ptr->parameters.size()) + ", got " +
+                               std::to_string(args.size()));
+        }
     }
 
     // TODO: TO COMPLETE THE PARAMETERS' ENVIRONMENT LOGIC
     // Step 4: Extend closure's environment with parameter bindings
     Assoc param_env = clos_ptr->env;
-    for (size_t i = 0; i < args.size(); ++i) {
-        const std::string &param = clos_ptr->parameters[i];
-        param_env = extend(param, args[i], param_env);
+
+    // Check if this is a variadic function
+    bool is_variadic = (clos_ptr->parameters.size() == 1 &&
+                        clos_ptr->parameters[0].size() >= 3 &&
+                        clos_ptr->parameters[0].substr(clos_ptr->parameters[0].size() - 3) == "...");
+
+    if (is_variadic) {
+        // For variadic functions, we need to handle them specially
+        // Check if this is a built-in variadic function like +, -, *, /
+        Procedure *proc = dynamic_cast<Procedure *>(proc_val.get());
+        if (proc && proc->e->e_type == E_PLUS) {
+            // For + function, directly call PlusVar with the arguments
+            return PlusVar(std::vector<Expr>()).evalRator(args);
+        } else if (proc && proc->e->e_type == E_MUL) {
+            // For * function, directly call MultVar with the arguments
+            return MultVar(std::vector<Expr>()).evalRator(args);
+        } else if (proc && proc->e->e_type == E_MINUS) {
+            // For - function, directly call MinusVar with the arguments
+            return MinusVar(std::vector<Expr>()).evalRator(args);
+        } else if (proc && proc->e->e_type == E_DIV) {
+            // For / function, directly call DivVar with the arguments
+            return DivVar(std::vector<Expr>()).evalRator(args);
+        } else {
+            // For other variadic functions, use the original list approach
+            std::string param_name = clos_ptr->parameters[0].substr(0, clos_ptr->parameters[0].size() - 3);
+            Value arg_list = NullV();
+            for (auto it = args.rbegin(); it != args.rend(); ++it) {
+                arg_list = PairV(*it, arg_list);
+            }
+            param_env = extend(param_name, arg_list, param_env);
+        }
+    } else {
+        // For normal functions, bind each argument to its corresponding parameter
+        for (size_t i = 0; i < args.size(); ++i) {
+            const std::string &param = clos_ptr->parameters[i];
+            param_env = extend(param, args[i], param_env);
+        }
     }
 
     // Step 5: Evaluate procedure body (support multiple expressions via Begin)

@@ -42,8 +42,8 @@ EOF
     echo ""
 done
 
-L_EXTRA=5
-R_EXTRA=6
+L_EXTRA=10
+R_EXTRA=10
 for ((i = $L_EXTRA; i <= $R_EXTRA; i = i + 1))
 do
     echo ""
