@@ -54,7 +54,8 @@ void REPL() {
 #ifndef ONLINE_JUDGE
         std::cout << "scm> ";
 #endif
-        Syntax stx = readSyntax(std ::cin); // read
+        Syntax stx = readSyntax(std::cin); // read
+        // stx->show(std::cout); // syntax print
         try {
             Expr expr = stx->parse(global_env); // parse
             Value val = expr->eval(global_env);
@@ -63,20 +64,24 @@ void REPL() {
             bool is_void_value = (val->v_type == V_VOID);
             bool is_explicit_void = isExplicitVoidCall(expr);
             if (!is_void_value || is_explicit_void) {
+                std::cout.clear();
                 val->show(std::cout); // value print
-                // puts("");
+                // std::cout << "WTF" << std::endl;
+                std::cout << "\n";
+                std::cout.flush();
             }
         } catch (const RuntimeError &RE) {
+            // std::cout << RE.message();
             std::cout << "RuntimeError";
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            // puts("");
+            puts("");
         }
-        puts("");
     }
 }
 
 int main(int argc, char *argv[]) {
     REPL();
+    std::cout.flush();
     return 0;
 }

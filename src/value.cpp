@@ -1,7 +1,7 @@
 /**
  * @file value.cpp
  * @brief Implementation of value types and environment operations
- * 
+ *
  * This file implements all value types, their constructors, show methods,
  * and environment (association list) operations for the Scheme interpreter.
  */
@@ -26,16 +26,16 @@ void ValueBase::showCdr(std::ostream &os) {
 
 Value::Value(ValueBase *ptr) : ptr(ptr) {}
 
-ValueBase* Value::operator->() const { 
-    return ptr.get(); 
+ValueBase *Value::operator->() const {
+    return ptr.get();
 }
 
-ValueBase& Value::operator*() { 
-    return *ptr; 
+ValueBase &Value::operator*() {
+    return *ptr;
 }
 
-ValueBase* Value::get() const { 
-    return ptr.get(); 
+ValueBase *Value::get() const {
+    return ptr.get();
 }
 
 void Value::show(std::ostream &os) {
@@ -51,16 +51,16 @@ AssocList::AssocList(const std::string &x, const Value &v, Assoc &next)
 
 Assoc::Assoc(AssocList *x) : ptr(x) {}
 
-AssocList* Assoc::operator->() const { 
-    return ptr.get(); 
+AssocList *Assoc::operator->() const {
+    return ptr.get();
 }
 
-AssocList& Assoc::operator*() { 
-    return *ptr; 
+AssocList &Assoc::operator*() {
+    return *ptr;
 }
 
-AssocList* Assoc::get() const { 
-    return ptr.get(); 
+AssocList *Assoc::get() const {
+    return ptr.get();
 }
 
 Assoc empty() {
@@ -118,8 +118,10 @@ Value IntegerV(int n) {
 // Rational
 // Helper function to calculate greatest common divisor
 static int gcd(int a, int b) {
-    if (a < 0) a = -a;
-    if (b < 0) b = -b;
+    if (a < 0)
+        a = -a;
+    if (b < 0)
+        b = -b;
     while (b != 0) {
         int temp = b;
         b = a % b;
@@ -132,12 +134,12 @@ Rational::Rational(int num, int den) : ValueBase(V_RATIONAL) {
     if (den == 0) {
         throw std::runtime_error("Division by zero");
     }
-    
+
     // Simplify the fraction
     int g = gcd(num, den);
     numerator = num / g;
     denominator = den / g;
-    
+
     // Ensure denominator is positive
     if (denominator < 0) {
         numerator = -numerator;
@@ -225,16 +227,18 @@ Value TerminateV() {
 // ============================================================================
 
 // Pair
-Pair::Pair(const Value &car, const Value &cdr) 
+Pair::Pair(const Value &car, const Value &cdr)
     : ValueBase(V_PAIR), car(car), cdr(cdr) {}
 
 void Pair::show(std::ostream &os) {
-    os << '(' << car;
+    os << '(';
+    car->show(os);
     cdr->showCdr(os);
 }
 
 void Pair::showCdr(std::ostream &os) {
-    os << ' ' << car;
+    os << ' ';
+    car->show(os);
     cdr->showCdr(os);
 }
 

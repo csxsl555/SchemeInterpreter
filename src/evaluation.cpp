@@ -987,7 +987,28 @@ Value Cond::eval(Assoc &env) {
         if (clause.empty()) {
             throw RuntimeError("cond: empty clause is invalid");
         }
-        // Evaluate the first element of the clause (the condition)
+
+        // Check if the condition is the 'else' keyword
+        bool is_else_clause = false;
+
+        // Check if it's a Var (already parsed symbol) with name "else"
+        Var *else_var = dynamic_cast<Var *>(clause[0].get());
+        if (else_var && else_var->x == "else") {
+            is_else_clause = true;
+        }
+
+        // For else clause, skip condition evaluation and always execute
+        if (is_else_clause) {
+            // Evaluate remaining expressions in the clause; return the last one
+            Value last_val = VoidV();
+            for (size_t i = 1; i < clause.size(); ++i) {
+                last_val = clause[i]->eval(env);
+            }
+            // If clause has only 'else' (no body), return #t (Scheme standard)
+            return (clause.size() == 1) ? BooleanV(true) : last_val;
+        }
+
+        // For normal clauses, evaluate the condition
         Value cond_val = clause[0]->eval(env);
         // Scheme rule: non-#f values are true
         bool is_true = !(cond_val->v_type == V_BOOL && !dynamic_cast<Boolean *>(cond_val.get())->b);
@@ -1099,19 +1120,21 @@ Value Define::eval(Assoc &env) {
         throw RuntimeError("Define: cannot redefine primitive/reserved word '" + var_name + "'");
     }
 
-    // Handle unary recursion:
+    // Handle recursion properly:
     // 1. First check if var exists in env; if not, extend with placeholder (VoidV)
     // 2. Evaluate the expression (may reference var for recursion)
     // 3. Modify the binding to the real value
     Value existing = find(var_name, env);
     if (existing.get() == nullptr) {
-        extend(var_name, VoidV(), env); // Placeholder for recursion
+        // Variable doesn't exist, create a placeholder for recursion
+        env = extend(var_name, VoidV(), env);
     }
 
     // Evaluate the expression (e is Define's member in expr.hpp)
-    Value val = e.get()->eval(env);
+    // This evaluation may reference the variable being defined (for recursion)
+    Value val = e->eval(env);
 
-    // Update the binding (modify if exists, extend if not — but we already extended above)
+    // Update the binding - always modify since we either found it or created a placeholder
     modify(var_name, val, env);
 
     return VoidV();
