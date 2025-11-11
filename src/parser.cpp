@@ -81,7 +81,198 @@ Expr List::parse(Assoc &env) {
 
         // std::cout << op << '!' << std::endl;
 
-        // Case 1: Check if it's a reserved word (highest priority)
+        if (find(op, env).get() != nullptr) {
+            // 作为变量应用处理（如lambda参数if/begin/quote）
+            // std::cout << op << "CNMB" << std::endl;
+            Expr rator = stxs[0].parse(env);
+            vector<Expr> rands;
+            for (size_t i = 1; i < stxs.size(); ++i) {
+                rands.push_back(stxs[i].parse(env));
+            }
+            return Expr(new Apply(rator, rands));
+        }
+
+        // Case 1: Check if it's a primitive operation
+        if (primitives.count(op) != 0) {
+            vector<Expr> parameters;
+            // TODO: TO COMPLETE THE PARAMETER PARSER LOGIC
+            //  Parse all subsequent elements as parameters
+            for (size_t i = 1; i < stxs.size(); ++i) {
+                parameters.push_back(stxs[i].parse(env));
+            }
+
+            ExprType op_type = primitives[op];
+            if (op_type == E_PLUS) {
+                // TODO: TO COMPLETE THE LOGIC
+                //  (+) => 0; (+ a) => a; (+ a b c...) => a + b + c + ...
+                return Expr(new PlusVar(parameters));
+            } else if (op_type == E_MINUS) {
+                // TODO: TO COMPLETE THE LOGIC
+                //  (- a) => 0 - a; (- a b c...) => a - b - c - ...
+                if (parameters.empty()) {
+                    throw RuntimeError("minus requires at least 1 argument");
+                }
+                return Expr(new MinusVar(parameters));
+            } else if (op_type == E_MUL) {
+                // TODO: TO COMPLETE THE LOGIC
+                //  (*) => 1; (* a) => a; (* a b c...) => a * b * c * ...
+                return Expr(new MultVar(parameters));
+            } else if (op_type == E_DIV) {
+                // TODO: TO COMPLETE THE LOGIC
+                //  (/ a) => 1 / a; (/ a b c...) => a / b / c / ...
+                if (parameters.empty()) {
+                    throw RuntimeError("division requires at least 1 argument");
+                }
+                return Expr(new DivVar(parameters));
+            } else if (op_type == E_MODULO) {
+                if (parameters.size() != 2) {
+                    throw RuntimeError("Wrong number of arguments for modulo");
+                }
+                return Expr(new Modulo(parameters[0], parameters[1]));
+            } else if (op_type == E_EXPT) {
+                // std::cout << "CNMB" << std::endl;
+                if (parameters.size() != 2) {
+                    throw RuntimeError("Wrong number of arguments for expt");
+                }
+                return Expr(new Expt(parameters[0], parameters[1]));
+            } else if (op_type == E_LIST) {
+                return Expr(new ListFunc(parameters));
+            } else if (op_type == E_LT) {
+                // TODO: TO COMPLETE THE LOGIC
+                //  (<) => #t; (< a) => #t; (< a b c...) => a < b < c < ...
+                return Expr(new LessVar(parameters));
+            } else if (op_type == E_LE) {
+                // TODO: TO COMPLETE THE LOGIC
+                //  (<=) => #t; (<= a) => #t; (<= a b c...) => a <= b <= c <= ...
+                return Expr(new LessEqVar(parameters));
+            } else if (op_type == E_EQ) {
+                // TODO: TO COMPLETE THE LOGIC
+                //  (=) => #t; (= a) => #t; (= a b c...) => a = b = c = ...
+                return Expr(new EqualVar(parameters));
+            } else if (op_type == E_GE) {
+                // TODO: TO COMPLETE THE LOGIC
+                //  (>=) => #t; (>= a) => #t; (>= a b c...) => a >= b >= c >= ...
+                return Expr(new GreaterEqVar(parameters));
+            } else if (op_type == E_GT) {
+                // TODO: TO COMPLETE THE LOGIC
+                //  (>) => #t; (>) => #t; (> a b c...) => a > b > c > ...
+                return Expr(new GreaterVar(parameters));
+            } else if (op_type == E_AND) {
+                return Expr(new AndVar(parameters));
+            } else if (op_type == E_OR) {
+                return Expr(new OrVar(parameters));
+            } else if (op_type == E_NOT) {
+                if (parameters.size() == 1) {
+                    return Expr(new Not(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for not");
+                }
+            } else if (op_type == E_CONS) {
+                if (parameters.size() == 2) {
+                    return Expr(new Cons(parameters[0], parameters[1]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for cons");
+                }
+            } else if (op_type == E_CAR) {
+                if (parameters.size() == 1) {
+                    return Expr(new Car(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for car");
+                }
+            } else if (op_type == E_CDR) {
+                if (parameters.size() == 1) {
+                    return Expr(new Cdr(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for cdr");
+                }
+            } else if (op_type == E_BOOLQ) {
+                if (parameters.size() == 1) {
+                    return Expr(new IsBoolean(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for boolean?");
+                }
+            } else if (op_type == E_INTQ) {
+                if (parameters.size() == 1) {
+                    return Expr(new IsFixnum(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for number?");
+                }
+            } else if (op_type == E_NULLQ) {
+                if (parameters.size() == 1) {
+                    return Expr(new IsNull(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for null?");
+                }
+            } else if (op_type == E_PAIRQ) {
+                if (parameters.size() == 1) {
+                    return Expr(new IsPair(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for pair?");
+                }
+            } else if (op_type == E_PROCQ) {
+                if (parameters.size() == 1) {
+                    return Expr(new IsProcedure(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for procedure?");
+                }
+            } else if (op_type == E_SYMBOLQ) {
+                if (parameters.size() == 1) {
+                    return Expr(new IsSymbol(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for symbol?");
+                }
+            } else if (op_type == E_STRINGQ) {
+                if (parameters.size() == 1) {
+                    return Expr(new IsString(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for string?");
+                }
+            } else if (op_type == E_EQQ) {
+                if (parameters.size() == 2) {
+                    return Expr(new IsEq(parameters[0], parameters[1]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for eq?");
+                }
+            } else if (op_type == E_DISPLAY) {
+                if (parameters.size() == 1) {
+                    return Expr(new Display(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for display");
+                }
+            } else if (op_type == E_SETCAR) {
+                // Added: Parse set-car! (2 arguments: pair + new-car)
+                if (parameters.size() == 2) {
+                    return Expr(new SetCar(parameters[0], parameters[1]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for set-car!");
+                }
+            } else if (op_type == E_SETCDR) {
+                // Added: Parse set-cdr! (2 arguments: pair + new-cdr)
+                if (parameters.size() == 2) {
+                    return Expr(new SetCdr(parameters[0], parameters[1]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for set-cdr!");
+                }
+            } else if (op_type == E_VOID) {
+                // Added: Parse void (0 arguments)
+                if (parameters.empty()) {
+                    return Expr(new MakeVoid());
+                } else {
+                    throw RuntimeError("Wrong number of arguments for void");
+                }
+            } else if (op_type == E_EXIT) {
+                // Added: Parse exit (0 arguments)
+                if (parameters.empty()) {
+                    return Expr(new Exit());
+                } else {
+                    throw RuntimeError("Wrong number of arguments for exit");
+                }
+            } else {
+                throw RuntimeError("Unsupported primitive operation: " + op);
+            }
+        }
+
+        // Case 2: Check if it's a reserved word
         if (reserved_words.count(op) != 0) {
             switch (reserved_words[op]) {
             // TODO: TO COMPLETE THE reserve_words PARSER LOGIC
@@ -124,10 +315,22 @@ Expr List::parse(Assoc &env) {
                     params.push_back(param_sym->s);
                 }
 
-                // Parse body (wrap multiple expressions with Begin)
+                // [Critical fix: Temporarily add parameters to the parsing environment]
+                // This ensures that parameter names (even if they match reserved words)
+                // are recognized as variables during body parsing
+                Assoc lambda_env = env; // Copy current environment
+                for (const string &param : params) {
+                    // Temporarily bind parameter to environment (value is irrelevant here;
+                    // we only need to mark that the name is bound)
+                    lambda_env = extend(param, VoidV(), lambda_env);
+                }
+
+                // [Parse body using the extended environment]
+                // Now references to parameter names will be recognized as variables
+                // instead of reserved words/special forms
                 vector<Expr> body_exprs;
                 for (size_t i = 2; i < stxs.size(); ++i) {
-                    body_exprs.push_back(stxs[i].parse(env));
+                    body_exprs.push_back(stxs[i].parse(lambda_env)); // Use lambda_env instead of original env
                 }
                 Expr body = (body_exprs.size() == 1) ? body_exprs[0] : Expr(new Begin(body_exprs));
                 return Expr(new Lambda(params, body));
@@ -308,186 +511,6 @@ Expr List::parse(Assoc &env) {
             }
             default:
                 throw RuntimeError("Unknown reserved word: " + op);
-            }
-        }
-
-        // Case 2: Check if it's a primitive operation
-        if (primitives.count(op) != 0) {
-            vector<Expr> parameters;
-            // TODO: TO COMPLETE THE PARAMETER PARSER LOGIC
-            //  Parse all subsequent elements as parameters
-            for (size_t i = 1; i < stxs.size(); ++i) {
-                parameters.push_back(stxs[i].parse(env));
-            }
-
-            ExprType op_type = primitives[op];
-            if (op_type == E_PLUS) {
-                // TODO: TO COMPLETE THE LOGIC
-                //  (+) => 0; (+ a) => a; (+ a b c...) => a + b + c + ...
-                return Expr(new PlusVar(parameters));
-            } else if (op_type == E_MINUS) {
-                // TODO: TO COMPLETE THE LOGIC
-                //  (- a) => 0 - a; (- a b c...) => a - b - c - ...
-                if (parameters.empty()) {
-                    throw RuntimeError("minus requires at least 1 argument");
-                }
-                return Expr(new MinusVar(parameters));
-            } else if (op_type == E_MUL) {
-                // TODO: TO COMPLETE THE LOGIC
-                //  (*) => 1; (* a) => a; (* a b c...) => a * b * c * ...
-                return Expr(new MultVar(parameters));
-            } else if (op_type == E_DIV) {
-                // TODO: TO COMPLETE THE LOGIC
-                //  (/ a) => 1 / a; (/ a b c...) => a / b / c / ...
-                if (parameters.empty()) {
-                    throw RuntimeError("division requires at least 1 argument");
-                }
-                return Expr(new DivVar(parameters));
-            } else if (op_type == E_MODULO) {
-                if (parameters.size() != 2) {
-                    throw RuntimeError("Wrong number of arguments for modulo");
-                }
-                return Expr(new Modulo(parameters[0], parameters[1]));
-            } else if (op_type == E_EXPT) {
-                // std::cout << "CNMB" << std::endl;
-                if (parameters.size() != 2) {
-                    throw RuntimeError("Wrong number of arguments for expt");
-                }
-                return Expr(new Expt(parameters[0], parameters[1]));
-            } else if (op_type == E_LIST) {
-                return Expr(new ListFunc(parameters));
-            } else if (op_type == E_LT) {
-                // TODO: TO COMPLETE THE LOGIC
-                //  (<) => #t; (< a) => #t; (< a b c...) => a < b < c < ...
-                return Expr(new LessVar(parameters));
-            } else if (op_type == E_LE) {
-                // TODO: TO COMPLETE THE LOGIC
-                //  (<=) => #t; (<= a) => #t; (<= a b c...) => a <= b <= c <= ...
-                return Expr(new LessEqVar(parameters));
-            } else if (op_type == E_EQ) {
-                // TODO: TO COMPLETE THE LOGIC
-                //  (=) => #t; (= a) => #t; (= a b c...) => a = b = c = ...
-                return Expr(new EqualVar(parameters));
-            } else if (op_type == E_GE) {
-                // TODO: TO COMPLETE THE LOGIC
-                //  (>=) => #t; (>= a) => #t; (>= a b c...) => a >= b >= c >= ...
-                return Expr(new GreaterEqVar(parameters));
-            } else if (op_type == E_GT) {
-                // TODO: TO COMPLETE THE LOGIC
-                //  (>) => #t; (>) => #t; (> a b c...) => a > b > c > ...
-                return Expr(new GreaterVar(parameters));
-            } else if (op_type == E_AND) {
-                return Expr(new AndVar(parameters));
-            } else if (op_type == E_OR) {
-                return Expr(new OrVar(parameters));
-            } else if (op_type == E_NOT) {
-                if (parameters.size() == 1) {
-                    return Expr(new Not(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for not");
-                }
-            } else if (op_type == E_CONS) {
-                if (parameters.size() == 2) {
-                    return Expr(new Cons(parameters[0], parameters[1]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for cons");
-                }
-            } else if (op_type == E_CAR) {
-                if (parameters.size() == 1) {
-                    return Expr(new Car(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for car");
-                }
-            } else if (op_type == E_CDR) {
-                if (parameters.size() == 1) {
-                    return Expr(new Cdr(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for cdr");
-                }
-            } else if (op_type == E_BOOLQ) {
-                if (parameters.size() == 1) {
-                    return Expr(new IsBoolean(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for boolean?");
-                }
-            } else if (op_type == E_INTQ) {
-                if (parameters.size() == 1) {
-                    return Expr(new IsFixnum(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for number?");
-                }
-            } else if (op_type == E_NULLQ) {
-                if (parameters.size() == 1) {
-                    return Expr(new IsNull(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for null?");
-                }
-            } else if (op_type == E_PAIRQ) {
-                if (parameters.size() == 1) {
-                    return Expr(new IsPair(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for pair?");
-                }
-            } else if (op_type == E_PROCQ) {
-                if (parameters.size() == 1) {
-                    return Expr(new IsProcedure(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for procedure?");
-                }
-            } else if (op_type == E_SYMBOLQ) {
-                if (parameters.size() == 1) {
-                    return Expr(new IsSymbol(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for symbol?");
-                }
-            } else if (op_type == E_STRINGQ) {
-                if (parameters.size() == 1) {
-                    return Expr(new IsString(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for string?");
-                }
-            } else if (op_type == E_EQQ) {
-                if (parameters.size() == 2) {
-                    return Expr(new IsEq(parameters[0], parameters[1]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for eq?");
-                }
-            } else if (op_type == E_DISPLAY) {
-                if (parameters.size() == 1) {
-                    return Expr(new Display(parameters[0]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for display");
-                }
-            } else if (op_type == E_SETCAR) {
-                // Added: Parse set-car! (2 arguments: pair + new-car)
-                if (parameters.size() == 2) {
-                    return Expr(new SetCar(parameters[0], parameters[1]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for set-car!");
-                }
-            } else if (op_type == E_SETCDR) {
-                // Added: Parse set-cdr! (2 arguments: pair + new-cdr)
-                if (parameters.size() == 2) {
-                    return Expr(new SetCdr(parameters[0], parameters[1]));
-                } else {
-                    throw RuntimeError("Wrong number of arguments for set-cdr!");
-                }
-            } else if (op_type == E_VOID) {
-                // Added: Parse void (0 arguments)
-                if (parameters.empty()) {
-                    return Expr(new MakeVoid());
-                } else {
-                    throw RuntimeError("Wrong number of arguments for void");
-                }
-            } else if (op_type == E_EXIT) {
-                // Added: Parse exit (0 arguments)
-                if (parameters.empty()) {
-                    return Expr(new Exit());
-                } else {
-                    throw RuntimeError("Wrong number of arguments for exit");
-                }
-            } else {
-                throw RuntimeError("Unsupported primitive operation: " + op);
             }
         }
 

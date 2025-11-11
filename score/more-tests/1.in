@@ -1,2 +1,4 @@
-(expt 2 3)
+((lambda (if) (if #f (quote true) (quote false))) (lambda (cond expr alter) cond))
+((lambda (begin) (begin (quote first) (quote second))) (lambda (first second) first))
+((lambda (quote) (quote #t)) (lambda (boolean) (not boolean)))
 (exit)
