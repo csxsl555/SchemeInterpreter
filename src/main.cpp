@@ -51,17 +51,14 @@ void REPL() {
     // read - evaluation - print loop
     Assoc global_env = empty();
     while (1) {
-#ifndef ONLINE_JUDGE
-        std::cout << "scm> ";
-#endif
         Syntax stx = readSyntax(std::cin); // read
         // stx->show(std::cout); // syntax print
         try {
             Expr expr = stx->parse(global_env); // parse
             Value val = expr->eval(global_env);
             if (val->v_type == V_TERMINATE) {
-#ifdef ONLINE_JUDGE
-                std::cout << "CNMB";
+#ifndef ONLINE_JUDGE
+                std::cout << "Terminate" << std::endl;
 #endif
                 break;
             }

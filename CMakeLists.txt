@@ -31,5 +31,4 @@ set_target_properties(code PROPERTIES
 target_compile_options(code
   PRIVATE
     -g
-    -DONLINE_JUDGE
 )
