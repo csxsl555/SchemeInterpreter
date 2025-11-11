@@ -1,18 +1,18 @@
-#ifndef VALUE 
+#ifndef VALUE
 #define VALUE
 
 /**
  * @file value.hpp
  * @brief Value system and environment definitions for the Scheme interpreter
- * 
+ *
  * This file defines the value types, environment (association list) system,
  * and all related operations for the Scheme interpreter runtime.
  */
 
 #include "Def.hpp"
 #include "expr.hpp"
-#include <memory>
 #include <cstring>
+#include <memory>
 #include <vector>
 
 // ============================================================================
@@ -37,9 +37,9 @@ struct Value {
     std::shared_ptr<ValueBase> ptr;
     Value(ValueBase *);
     void show(std::ostream &);
-    ValueBase* operator->() const;
-    ValueBase& operator*();
-    ValueBase* get() const;
+    ValueBase *operator->() const;
+    ValueBase &operator*();
+    ValueBase *get() const;
 };
 
 // ============================================================================
@@ -52,25 +52,26 @@ struct Value {
 struct Assoc {
     std::shared_ptr<AssocList> ptr;
     Assoc(AssocList *);
-    AssocList* operator->() const;
-    AssocList& operator*();
-    AssocList* get() const;
+    AssocList *operator->() const;
+    AssocList &operator*();
+    AssocList *get() const;
 };
 
 /**
  * @brief Association list node for variable bindings
  */
 struct AssocList {
-    std::string x;      ///< Variable name
-    Value v;            ///< Variable value
-    Assoc next;         ///< Next binding in the chain
+    std::string x; ///< Variable name
+    Value v;       ///< Variable value
+    Assoc next;    ///< Next binding in the chain
     AssocList(const std::string &, const Value &, Assoc &);
 };
 
 // Environment operations
 Assoc empty();
-Assoc extend(const std::string&, const Value &, Assoc &);
-void modify(const std::string&, const Value &, Assoc &);
+Assoc extend(const std::string &, const Value &, Assoc &);
+void modify(const std::string &, const Value &, Assoc &);
+void insert(const std::string &, const Value &, Assoc &);
 Value find(const std::string &, Assoc &);
 
 // ============================================================================
@@ -168,8 +169,8 @@ Value TerminateV();
  * @brief Pair value (cons cell)
  */
 struct Pair : ValueBase {
-    Value car;  ///< First element
-    Value cdr;  ///< Second element
+    Value car; ///< First element
+    Value cdr; ///< Second element
     Pair(const Value &, const Value &);
     virtual void show(std::ostream &) override;
     virtual void showCdr(std::ostream &) override;
@@ -180,9 +181,9 @@ Value PairV(const Value &, const Value &);
  * @brief Procedure (function) value
  */
 struct Procedure : ValueBase {
-    std::vector<std::string> parameters;   ///< Parameter names
-    Expr e;                                ///< Function body expression
-    Assoc env;                             ///< Closure environment
+    std::vector<std::string> parameters; ///< Parameter names
+    Expr e;                              ///< Function body expression
+    Assoc env;                           ///< Closure environment
     Procedure(const std::vector<std::string> &, const Expr &, const Assoc &);
     virtual void show(std::ostream &) override;
 };

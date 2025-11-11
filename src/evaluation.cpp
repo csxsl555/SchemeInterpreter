@@ -178,6 +178,9 @@ Value Var::eval(Assoc &e) { // evaluation of variable
         // Step 3: Variable not found in environment or primitives
         throw RuntimeError("Undefined variable: '" + x + "'");
     }
+    if (matched_value->v_type == V_VOID) {
+        throw RuntimeError("Variable '" + x + "' referenced before definition (invalid recursion)");
+    }
     return matched_value;
 }
 
@@ -1124,30 +1127,10 @@ Value Apply::eval(Assoc &e) {
 
 Value Define::eval(Assoc &env) {
     // TODO: To complete the define logic
-    std::string var_name = var;
-
-    // Validate: var cannot be primitive or reserved word
-    if (primitives.count(var_name) || reserved_words.count(var_name)) {
-        throw RuntimeError("Define: cannot redefine primitive/reserved word '" + var_name + "'");
-    }
-
-    // Handle recursion properly:
-    // 1. First check if var exists in env; if not, extend with placeholder (VoidV)
-    // 2. Evaluate the expression (may reference var for recursion)
-    // 3. Modify the binding to the real value
-    Value existing = find(var_name, env);
-    if (existing.get() == nullptr) {
-        // Variable doesn't exist, create a placeholder for recursion
-        env = extend(var_name, VoidV(), env);
-    }
-
-    // Evaluate the expression (e is Define's member in expr.hpp)
-    // This evaluation may reference the variable being defined (for recursion)
-    Value val = e->eval(env);
-
-    // Update the binding - always modify since we either found it or created a placeholder
-    modify(var_name, val, env);
-
+    Assoc rec_env = env;
+    insert(var, Value(nullptr), rec_env);
+    modify(var, e->eval(rec_env), rec_env);
+    env = rec_env;
     return VoidV();
 }
 

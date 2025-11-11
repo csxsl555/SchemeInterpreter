@@ -43,7 +43,7 @@ EOF
 done
 
 L_EXTRA=1
-R_EXTRA=1
+R_EXTRA=20
 for ((i = $L_EXTRA; i <= $R_EXTRA; i = i + 1))
 do
     echo ""

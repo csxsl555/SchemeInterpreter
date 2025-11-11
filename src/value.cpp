@@ -81,6 +81,16 @@ void modify(const std::string &x, const Value &v, Assoc &lst) {
     }
 }
 
+void insert(const std::string &x, const Value &v, Assoc &lst) {
+    // Insert new binding at the front of the environment (standard for variable shadowing)
+    if (!lst.get()) {
+        auto head = Assoc(nullptr);
+        lst = extend(x, v, head);
+        return;
+    }
+    lst->next = extend(x, v, lst->next);
+}
+
 Value find(const std::string &x, Assoc &l) {
     for (auto i = l; i.get() != nullptr; i = i->next) {
         if (x == i->x) {

@@ -416,12 +416,12 @@ Expr List::parse(Assoc &env) {
                 return Expr(new Cond(clauses));
             }
             case E_LET: {
-                // Added: Parse let syntax: (let ((var1 expr1) (var2 expr2) ...) body...)
                 if (stxs.size() < 3) {
                     throw RuntimeError("let requires at least 2 arguments (bindings + body)");
                 }
 
-                // Helper function to parse bindings
+                // Helper function to parse (var expr) binding pairs
+                // Evaluates the expression in the original environment (non-recursive)
                 auto parseBindings = [&](List *bindings_list) -> vector<pair<string, Expr>> {
                     vector<pair<string, Expr>> bindings;
                     for (auto &binding_stx : bindings_list->stxs) {
@@ -433,13 +433,14 @@ Expr List::parse(Assoc &env) {
                         if (!var_sym) {
                             throw RuntimeError("let binding variable must be a symbol");
                         }
+                        // Parse the bound expression in the original environment (outer scope)
                         Expr expr = var_expr_pair->stxs[1].parse(env);
                         bindings.emplace_back(var_sym->s, expr);
                     }
                     return bindings;
                 };
 
-                // Parse bindings list (must be a List of (var expr) pairs)
+                // Parse the bindings list (must be a list of (var expr) pairs)
                 List *bindings_list = dynamic_cast<List *>(stxs[1].get());
                 if (!bindings_list) {
                     throw RuntimeError("let bindings must be a list");
@@ -447,10 +448,20 @@ Expr List::parse(Assoc &env) {
 
                 vector<pair<string, Expr>> bindings = parseBindings(bindings_list);
 
-                // Parse body (wrap multiple expressions with Begin)
+                // Critical fix: Create a temporary parsing environment to handle shadowing of special forms
+                // Add placeholder bindings for let variables to prioritize them over special forms/reserved words
+                Assoc let_parse_env = env; // Extend the original environment
+                for (const auto &[var, _] : bindings) {
+                    // Insert placeholder (VoidV) to mark the variable as "bound" during parsing
+                    // This ensures the parser recognizes it as a variable, not a special form
+                    let_parse_env = extend(var, VoidV(), let_parse_env);
+                }
+
+                // Parse the let body using the temporary environment with placeholder bindings
+                // This allows shadowed special forms (like lambda) to be treated as variables
                 vector<Expr> body_exprs;
                 for (size_t i = 2; i < stxs.size(); ++i) {
-                    body_exprs.push_back(stxs[i].parse(env));
+                    body_exprs.push_back(stxs[i].parse(let_parse_env)); // Use let_parse_env instead of original env
                 }
                 Expr body = (body_exprs.size() == 1) ? body_exprs[0] : Expr(new Begin(body_exprs));
                 return Expr(new Let(bindings, body));
