@@ -40,6 +40,7 @@ ValueBase *Value::get() const {
 
 void Value::show(std::ostream &os) {
     ptr->show(os);
+    // os << "!" << std::endl;
 }
 
 // ============================================================================

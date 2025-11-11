@@ -59,29 +59,29 @@ void REPL() {
         try {
             Expr expr = stx->parse(global_env); // parse
             Value val = expr->eval(global_env);
-            if (val->v_type == V_TERMINATE)
+            if (val->v_type == V_TERMINATE) {
+#ifdef ONLINE_JUDGE
+                std::cout << "CNMB";
+#endif
                 break;
+            }
             bool is_void_value = (val->v_type == V_VOID);
             bool is_explicit_void = isExplicitVoidCall(expr);
             if (!is_void_value || is_explicit_void) {
-                std::cout.clear();
-                val->show(std::cout); // value print
-                // std::cout << "WTF" << std::endl;
-                std::cout << "\n";
+                val->show(std::cout);
+                std::cout << std::endl;
                 std::cout.flush();
             }
         } catch (const RuntimeError &RE) {
             // std::cout << RE.message();
             std::cout << "RuntimeError";
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            puts("");
+            std::cout << std::endl;
+            std::cout.flush();
         }
     }
 }
 
 int main(int argc, char *argv[]) {
     REPL();
-    std::cout.flush();
     return 0;
 }

@@ -456,7 +456,7 @@ Value Expt::evalRator(const Value &rand1, const Value &rand2) { // expt
             }
             exp /= 2;
         }
-
+        // std::cout << "DEBUG: expt result = " << (int)result << std::endl;
         return IntegerV((int)result);
     }
     throw(RuntimeError("Wrong typename"));
@@ -1197,6 +1197,7 @@ Value Display::evalRator(const Value &rand) { // display function
     if (rand->v_type == V_STRING) {
         String *str_ptr = dynamic_cast<String *>(rand.get());
         std::cout << str_ptr->s;
+        std::cout.flush();
     } else {
         rand->show(std::cout);
     }

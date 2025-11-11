@@ -348,6 +348,12 @@ Expr List::parse(Assoc &env) {
                     throw RuntimeError("Wrong number of arguments for modulo");
                 }
                 return Expr(new Modulo(parameters[0], parameters[1]));
+            } else if (op_type == E_EXPT) {
+                // std::cout << "CNMB" << std::endl;
+                if (parameters.size() != 2) {
+                    throw RuntimeError("Wrong number of arguments for expt");
+                }
+                return Expr(new Expt(parameters[0], parameters[1]));
             } else if (op_type == E_LIST) {
                 return Expr(new ListFunc(parameters));
             } else if (op_type == E_LT) {
