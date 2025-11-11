@@ -150,6 +150,17 @@ Value Var::eval(Assoc &e) { // evaluation of variable
                 {E_MODULO, {new Modulo(new Var("parm1"), new Var("parm2")), {"parm1", "parm2"}}},
                 {E_EXPT, {new Expt(new Var("parm1"), new Var("parm2")), {"parm1", "parm2"}}},
                 {E_EQQ, {new EqualVar({}), {}}},
+                {E_LT, {new LessVar({}), {"numbers..."}}},
+                {E_GT, {new GreaterVar({}), {"numbers..."}}},
+                {E_LE, {new LessEqVar({}), {"numbers..."}}},
+                {E_GE, {new GreaterEqVar({}), {"numbers..."}}},
+                {E_EQ, {new GreaterVar({}), {"numbers..."}}},
+                {E_NOT, {new Not(new Var("parm")), {"parm"}}},
+                {E_AND, {new AndVar({}), {"booleans..."}}},
+                {E_OR, {new OrVar({}), {"booleans..."}}},
+                {E_CONS, {new Cons(new Var("parm1"), new Var("parm2")), {"parm1", "parm2"}}},
+                {E_CAR, {new Car(new Var("parm")), {"parm"}}},
+                {E_CDR, {new Cdr(new Var("parm")), {"parm"}}},
             };
 
             auto it = primitive_map.find(primitives[x]);
@@ -1197,7 +1208,6 @@ Value Display::evalRator(const Value &rand) { // display function
     if (rand->v_type == V_STRING) {
         String *str_ptr = dynamic_cast<String *>(rand.get());
         std::cout << str_ptr->s;
-        std::cout.flush();
     } else {
         rand->show(std::cout);
     }
